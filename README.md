@@ -342,8 +342,6 @@ button.shop-btn {
 
 <div id="menu-bar">
   <button onclick="showScreen('main')">🏠</button>
-  <button onclick="showScreen('shop')">🛒</button>
-  <button onclick="showScreen('boss')">⚔️</button>
   <button onclick="showScreen('menu')">☰</button>
 </div>
 
@@ -352,7 +350,6 @@ button.shop-btn {
 <div id="screen-boss" class="screen">…ボス画面…</div>
 <div id="screen-menu" class="screen">
   <h3>メニュー</h3>
-  <button onclick="saveGame()">💾 セーブ</button>
   <button onclick="toggleSound()">🔊 効果音</button>
   <div id="status-box"></div>
 </div>
