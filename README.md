@@ -179,6 +179,66 @@ button.shop-btn {
   color: #f1c40f;
 }
 
+/* ===== ガチャ演出 ===== */
+#gacha-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+#gacha-box {
+  width: 260px;
+  height: 260px;
+  background: #222;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+  animation: gacha-spin 1s linear infinite;
+}
+
+@keyframes gacha-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gacha-rare {
+  background: radial-gradient(circle, #3498db, #1e1e1e);
+  box-shadow: 0 0 20px #3498db;
+}
+
+.gacha-super {
+  background: radial-gradient(circle, #f1c40f, #1e1e1e);
+  box-shadow: 0 0 30px #f1c40f;
+  animation: flash 0.5s infinite alternate;
+}
+
+.gacha-ultra {
+  background: linear-gradient(45deg,
+    red, orange, yellow, green, cyan, blue, violet);
+  color: black;
+  box-shadow: 0 0 40px white;
+  animation: ultra 0.2s infinite;
+}
+
+@keyframes flash {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+@keyframes ultra {
+  from { transform: scale(1) rotate(-2deg); }
+  to { transform: scale(1.05) rotate(2deg); }
+}
+
+
 </style>
 </head>
 
@@ -261,6 +321,17 @@ button.shop-btn {
   </div>
 </div>
 
+
+
+<div class="item unlocked">
+  🎰 武器ガチャ
+  <button onclick="drawGacha()">5000G</button>
+  <div class="desc">
+    ランダムで攻撃力が上昇するガチャ。<br>
+    レア排出あり！
+  </div>
+  <div id="gacha-result"></div>
+</div>
 <div id="main" class="screen active">
   <!-- メイン画面 -->
 </div>
@@ -286,15 +357,6 @@ button.shop-btn {
   <div id="status-box"></div>
 </div>
 
-<div class="item unlocked">
-  🎰 武器ガチャ
-  <button onclick="drawGacha()">500G</button>
-  <div class="desc">
-    ランダムで攻撃力が上昇するガチャ。<br>
-    レア排出あり！
-  </div>
-  <div id="gacha-result"></div>
-</div>
 
 <script>
 let gameData = {
@@ -566,31 +628,55 @@ function drawGacha(){
   }
 
   gameData.pts -= cost;
+  updateDisplay();
 
-  const r = Math.random() * 100;
-  let powerGain = 0;
-  let text = "";
+  const overlay = document.getElementById("gacha-overlay");
+  const box = document.getElementById("gacha-box");
+  const text = document.getElementById("gacha-text");
 
-  if(r < 60){
-    powerGain = 10;
-    text = "ノーマル：攻撃力 +10";
-  }else if(r < 85){
-    powerGain = 50;
-    text = "レア：攻撃力 +50";
-  }else if(r < 95){
-    powerGain = 100;
-    text = "スーパーレア：攻撃力 +100";
-  }else{
-    powerGain = 500;
-    text = "✨ウルトラレア✨ 攻撃力 +500";
-  }
-
-  gameData.power += powerGain;
-  document.getElementById("gacha-result").innerText = text;
+  overlay.style.display = "flex";
+  box.className = "";
+  text.innerText = "抽選中…";
 
   playBuySound();
-  updateDisplay();
+
+  setTimeout(() => {
+    const r = Math.random() * 100;
+    let powerGain = 0;
+    let resultText = "";
+
+    if(r < 60){
+      powerGain = 10;
+      resultText = "ノーマル\n攻撃力 +10";
+    }else if(r < 85){
+      powerGain = 50;
+      resultText = "レア！\n攻撃力 +50";
+      box.classList.add("gacha-rare");
+    }else if(r < 95){
+      powerGain = 100;
+      resultText = "スーパーレア！！\n攻撃力 +100";
+      box.classList.add("gacha-super");
+    }else{
+      powerGain = 500;
+      resultText = "✨ウルトラレア✨\n攻撃力 +500";
+      box.classList.add("gacha-ultra");
+    }
+
+    gameData.power += powerGain;
+    text.innerText = resultText;
+
+    playBossWinSound();
+    updateDisplay();
+
+    setTimeout(() => {
+      overlay.style.display = "none";
+      document.getElementById("gacha-result").innerText =
+        resultText.replace("\n", " ");
+    }, 1800);
+
+  }, 1500);
 }
+
 
 function buyItem(id, cost){
   if((Number(gameData.pts) || 0) < cost){
@@ -639,6 +725,13 @@ setInterval(() => {
 window.addEventListener("beforeunload", saveGame);
 
 </script>
+
+<!-- ガチャ演出 -->
+<div id="gacha-overlay">
+  <div id="gacha-box">
+    <div id="gacha-text">抽選中…</div>
+  </div>
+</div>
 
 </body>
 </html>
