@@ -382,36 +382,39 @@ let bossData = {
   timer: null
 };
 
-/* 効果音システム */
-let audioCtx = null;
+/* ===== 安定版 効果音システム ===== */
+let audioCtx;
+let seEnabled = true;
 
-function initAudio(){
+function initAudioOnce(){
   if(!audioCtx){
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-}
-
-function playSE(frequency, duration = 0.1, volume = 0.3){
-  try{
-    initAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    osc.frequency.value = frequency;
-    osc.type = 'sine';
-    
-    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + duration);
-  }catch(e){
-    console.log("効果音再生エラー:", e);
+  if(audioCtx.state === "suspended"){
+    audioCtx.resume();
   }
 }
+
+function playSE(freq, duration = 0.1, volume = 0.2){
+  if(!seEnabled) return;
+
+  initAudioOnce();
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "sine";
+  osc.frequency.value = freq;
+
+  gain.gain.value = volume;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
 
 const playClickSound = () => playSE(700, 0.05, 0.2);
 const playBossStartSound = () => playSE(200, 0.3, 0.3);
@@ -421,6 +424,10 @@ const playBossLoseSound = () => playSE(150, 0.4, 0.3);
 const playBuySound = () => playSE(500, 0.15, 0.25);
 
 const playErrorSound = () => playSE(180, 0.12, 0.28);
+
+document.addEventListener("touchstart", initAudioOnce, { once:true });
+document.addEventListener("click", initAudioOnce, { once:true });
+
 
 function showMessage(msg, duration = 1500){
   try{
@@ -437,6 +444,12 @@ function showMessage(msg, duration = 1500){
     setTimeout(() => el.remove(), 300);
   }, duration);
 }
+
+function toggleSound(){
+  seEnabled = !seEnabled;
+  showMessage(seEnabled ? "🔊 効果音ON" : "🔇 効果音OFF");
+}
+
 
 function saveGame(){
   localStorage.setItem("clickerSave", JSON.stringify(gameData));
